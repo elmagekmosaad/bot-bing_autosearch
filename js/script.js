@@ -8,6 +8,7 @@
             limit: document.getElementById("slc-limit"),
             interval: document.getElementById("slc-interval"),
             multitab: document.getElementById("slc-multitab"),
+            device: document.getElementById("slc-device")
         },
         span: {
             progress: document.getElementById("span-progress"),
@@ -76,6 +77,7 @@
         limit: 35,
         interval: 10000,
         multitab: false,
+        device: "desktop",
         engine: {
             terms: {
                 lists: [
@@ -112,6 +114,7 @@
                         "أخبار السياسة"
                     ]
                 ],
+                trends: [],
                 async fetchEgyptTrends() {
                     try {
                         let response = await fetch('https://trends24.in/egypt/');
@@ -120,15 +123,12 @@
                         let doc = parser.parseFromString(html, 'text/html');
                         let hashtags = Array.from(doc.querySelectorAll('.trend-card .trend-card__list li a')).map(a => a.textContent.trim());
                         if (hashtags.length > 0) {
-                            this.lists[0] = hashtags;
+                            this.trends = hashtags;
                         }
-                    } catch (e) { }
+                    } catch (e) { this.trends = []; }
                 },
                 random: function () {
-                    let list = this.lists[0];
-                    if (!list || list.length === 0) {
-                        return this.lists[0][Math.floor(Math.random() * this.lists[0].length)];
-                    }
+                    let list = this.trends && this.trends.length > 0 ? this.trends : this.lists[0];
                     let term = list[Math.floor(Math.random() * list.length)];
                     return term;
                 }
@@ -145,8 +145,14 @@
             window: {
                 open: (search) => {
                     try {
+                        let ua = BING_AUTOSEARCH.search.device === "mobile"
+                            ? "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36 EdgA/139.0.0.0"
+                            : navigator.userAgent;
                         let w = window.open(search.url);
                         if (w) {
+                            try {
+                                Object.defineProperty(w.navigator, 'userAgent', { get: function () { return ua; } });
+                            } catch (e) { }
                             setTimeout(() => {
                                 w.close();
                             }, (search.interval <= 10000 && BING_AUTOSEARCH.search.interval !== 9999 ? search.interval : 10000) - 500);
@@ -263,6 +269,7 @@
         BING_AUTOSEARCH.elements.button.start.addEventListener("click", () => {
             BING_AUTOSEARCH.elements.button.start.style.display = "none";
             BING_AUTOSEARCH.elements.button.stop.style.display = "inline-block";
+            BING_AUTOSEARCH.search.device = BING_AUTOSEARCH.elements.select.device.value;
             BING_AUTOSEARCH.search.start();
         });
         BING_AUTOSEARCH.elements.button.stop.addEventListener("click", () => {
@@ -279,6 +286,9 @@
         BING_AUTOSEARCH.elements.select.interval.addEventListener("change", () => {
             BING_AUTOSEARCH.cookies.set("_search_interval", BING_AUTOSEARCH.elements.select.interval.value, 365);
             location.reload();
+        });
+        BING_AUTOSEARCH.elements.select.device.addEventListener("change", () => {
+            BING_AUTOSEARCH.search.device = BING_AUTOSEARCH.elements.select.device.value;
         });
         BING_AUTOSEARCH.elements.div.settings.innerHTML = `<strong>Auto Search Settings:</strong> ${BING_AUTOSEARCH.search.engine.settings.toString()}.`;
     }
