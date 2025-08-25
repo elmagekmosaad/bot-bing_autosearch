@@ -82,53 +82,56 @@
             terms: {
                 lists: [
                     [
-                        "أخبار اليوم",
-                        "أسعار الدولار",
-                        "وظائف خالية",
-                        "نتيجة الثانوية العامة",
-                        "مشاهير العرب",
-                        "مباريات الأهلي",
-                        "طقس القاهرة",
+                        "مهرجان الجونة",
+                        "مهرجان القاهرة السينمائي",
+                        "مهرجان الموسيقى العربية",
                         "مسلسلات رمضان",
-                        "التعليم في مصر",
-                        "سيارات جديدة",
-                        "الذهب اليوم",
-                        "كورونا",
+                        "مباريات الأهلي والزمالك",
+                        "أسعار الذهب اليوم",
+                        "أسعار الدولار",
+                        "سعر البنزين",
+                        "نتيجة الثانوية العامة",
+                        "وظائف حكومية",
+                        "وظائف خالية",
+                        "حوادث اليوم",
+                        "طقس القاهرة",
+                        "أخبار المشاهير",
+                        "أخبار السياسة",
+                        "الاقتصاد المصري",
+                        "عروض سوبر ماركت",
+                        "تخفيضات الصيف",
+                        "الجامعات المصرية",
                         "أحدث التكنولوجيا",
                         "السياحة في مصر",
                         "الرياضة المصرية",
                         "تريندات تويتر",
                         "تريندات فيسبوك",
-                        "مهرجانات القاهرة",
-                        "الجامعات المصرية",
-                        "سعر البنزين",
-                        "الاقتصاد المصري",
                         "إعلانات وظائف",
-                        "حوادث اليوم",
-                        "عروض سوبر ماركت",
-                        "تخفيضات الصيف",
                         "البرامج التلفزيونية",
-                        "مهرجان الجونة",
-                        "الموسيقى العربية",
                         "فنانون مصريون",
-                        "أخبار السياسة"
+                        "أغاني مهرجانات",
+                        "كوميكس مصري",
+                        "أخبار اليوم",
+                        "أخبار الفن",
+                        "أخبار الرياضة",
+                        "أخبار التعليم",
+                        "أخبار الطقس",
+                        "أخبار السيارات",
+                        "أخبار كورونا",
+                        "أخبار رمضان",
+                        "أخبار الدوري المصري",
+                        "أخبار المنتخب المصري",
+                        "أخبار كأس الأمم الإفريقية",
+                        "أخبار كأس العالم",
+                        "أخبار الدوري الإنجليزي",
+                        "أخبار الدوري الإسباني",
+                        "أخبار الدوري الإيطالي",
+                        "أخبار الدوري الألماني",
+                        "أخبار الدوري الفرنسي"
                     ]
                 ],
-                trends: [],
-                async fetchEgyptTrends() {
-                    try {
-                        let response = await fetch('https://trends24.in/egypt/');
-                        let html = await response.text();
-                        let parser = new DOMParser();
-                        let doc = parser.parseFromString(html, 'text/html');
-                        let hashtags = Array.from(doc.querySelectorAll('.trend-card .trend-card__list li a')).map(a => a.textContent.trim());
-                        if (hashtags.length > 0) {
-                            this.trends = hashtags;
-                        }
-                    } catch (e) { this.trends = []; }
-                },
                 random: function () {
-                    let list = this.trends && this.trends.length > 0 ? this.trends : this.lists[0];
+                    let list = this.lists[0];
                     let term = list[Math.floor(Math.random() * list.length)];
                     return term;
                 }
@@ -239,7 +242,9 @@
             return searches;
         },
         start: async () => {
-            await BING_AUTOSEARCH.search.engine.terms.fetchEgyptTrends();
+            if (BING_AUTOSEARCH.search.device === "mobile") {
+                alert("To get real mobile search results, please use a mobile browser or enable mobile mode in your browser's developer tools.");
+            }
             let searches = BING_AUTOSEARCH.search.generate();
             searches.forEach((search) => {
                 setTimeout(() => {
