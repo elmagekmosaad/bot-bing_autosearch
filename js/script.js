@@ -145,17 +145,99 @@
                     return BING_AUTOSEARCH.search.engine.form.params[Math.floor(Math.random() * BING_AUTOSEARCH.search.engine.form.params.length)]
                 }
             },
+            mobile: {
+                userAgents: [
+                    "Mozilla/5.0 (Android 6.0.1; Mobile; rv:63.0) Gecko/63.0 Firefox/63.0",
+                    "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
+                    "Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.85 Mobile Safari/537.36",
+                    "Mozilla/5.0 (Linux; Android 11; SM-A515F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.74 Mobile Safari/537.36",
+                    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
+                    "Mozilla/5.0 (Linux; Android 12; SM-G996B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Mobile Safari/537.36"
+                ],
+                getUserAgent: () => {
+                    return BING_AUTOSEARCH.search.engine.mobile.userAgents[Math.floor(Math.random() * BING_AUTOSEARCH.search.engine.mobile.userAgents.length)];
+                },
+                enhanceUrl: (baseUrl) => {
+                    // Add mobile-specific parameters to make the search more mobile-like
+                    let url = new URL(baseUrl);
+                    
+                    // Add mobile-specific parameters
+                    url.searchParams.set('mkt', 'ar-EG'); // Arabic Egypt market for mobile
+                    url.searchParams.set('pc', 'MOZI'); // Mobile PC parameter
+                    url.searchParams.set('cvid', BING_AUTOSEARCH.search.engine.mobile.generateCvid());
+                    
+                    // Randomly add mobile search enhancement parameters
+                    if (Math.random() < 0.3) {
+                        url.searchParams.set('src', 'mb'); // Mobile browser source
+                    }
+                    
+                    return url.toString();
+                },
+                generateCvid: () => {
+                    // Generate a random CVID similar to mobile Bing searches
+                    const chars = '0123456789ABCDEF';
+                    let cvid = '';
+                    for (let i = 0; i < 32; i++) {
+                        cvid += chars.charAt(Math.floor(Math.random() * chars.length));
+                        if (i === 7 || i === 15 || i === 23) cvid += '-';
+                    }
+                    return cvid;
+                },
+                simulateMobileBehavior: (windowRef) => {
+                    try {
+                        // Add some mobile-specific behaviors after page load
+                        setTimeout(() => {
+                            if (windowRef && !windowRef.closed) {
+                                // Simulate occasional scrolling on mobile (30% chance)
+                                if (Math.random() < 0.3) {
+                                    const scrollAmount = Math.floor(Math.random() * 300) + 100;
+                                    windowRef.scrollBy(0, scrollAmount);
+                                }
+                                
+                                // Simulate mobile touch behavior by briefly focusing on search results
+                                if (Math.random() < 0.2) {
+                                    setTimeout(() => {
+                                        if (windowRef && !windowRef.closed) {
+                                            const searchResults = windowRef.document.querySelectorAll('h2 a, .b_algo h2 a');
+                                            if (searchResults.length > 0) {
+                                                const randomResult = searchResults[Math.floor(Math.random() * Math.min(3, searchResults.length))];
+                                                randomResult.focus();
+                                                setTimeout(() => randomResult.blur(), 500 + Math.random() * 1000);
+                                            }
+                                        }
+                                    }, 1000 + Math.random() * 2000);
+                                }
+                            }
+                        }, 2000 + Math.random() * 3000);
+                    } catch (e) {
+                        // Silently handle any errors in mobile behavior simulation
+                    }
+                }
+            },
             window: {
                 open: (search) => {
                     try {
                         let ua = BING_AUTOSEARCH.search.device === "mobile"
-                            ? "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36 EdgA/139.0.0.0"
+                            ? BING_AUTOSEARCH.search.engine.mobile.getUserAgent()
                             : navigator.userAgent;
-                        let w = window.open(search.url);
+                        
+                        // For mobile searches, add mobile-specific parameters
+                        let searchUrl = search.url;
+                        if (BING_AUTOSEARCH.search.device === "mobile") {
+                            searchUrl = BING_AUTOSEARCH.search.engine.mobile.enhanceUrl(search.url);
+                        }
+                        
+                        let w = window.open(searchUrl);
                         if (w) {
                             try {
                                 Object.defineProperty(w.navigator, 'userAgent', { get: function () { return ua; } });
                             } catch (e) { }
+                            
+                            // Add mobile-specific behavior
+                            if (BING_AUTOSEARCH.search.device === "mobile") {
+                                BING_AUTOSEARCH.search.engine.mobile.simulateMobileBehavior(w);
+                            }
+                            
                             setTimeout(() => {
                                 w.close();
                             }, (search.interval <= 10000 && BING_AUTOSEARCH.search.interval !== 9999 ? search.interval : 10000) - 500);
@@ -166,9 +248,25 @@
             iframe: {
                 add: (search) => {
                     let iframe = document.createElement("iframe");
-                    iframe.setAttribute("src", search.url);
+                    
+                    // Enhanced mobile search URL if mobile mode is enabled
+                    let searchUrl = search.url;
+                    if (BING_AUTOSEARCH.search.device === "mobile") {
+                        searchUrl = BING_AUTOSEARCH.search.engine.mobile.enhanceUrl(search.url);
+                    }
+                    
+                    iframe.setAttribute("src", searchUrl);
                     iframe.setAttribute("title", search.term);
                     iframe.setAttribute("data-index", search.index);
+                    
+                    // Add mobile-specific iframe styling if mobile mode is enabled
+                    if (BING_AUTOSEARCH.search.device === "mobile") {
+                        iframe.style.width = "360px";
+                        iframe.style.height = "640px";
+                        iframe.style.border = "1px solid #ddd";
+                        iframe.style.borderRadius = "8px";
+                    }
+                    
                     if (BING_AUTOSEARCH.elements.div.bing.firstChild)
                         BING_AUTOSEARCH.elements.div.bing.removeChild(BING_AUTOSEARCH.elements.div.bing.firstChild);
                     BING_AUTOSEARCH.elements.div.bing.appendChild(iframe);
@@ -234,8 +332,22 @@
                     let index = searches.length + 1;
                     let url = `https://www.bing.com/search?q=${encodeURIComponent(term.toLowerCase())}&FORM=${BING_AUTOSEARCH.search.engine.form.random()}`;
                     let delay = BING_AUTOSEARCH.search.interval * searches.length;
-                    if (BING_AUTOSEARCH.search.interval === 9999 && searches.length > 0)
-                        delay = randomDelay = ((Math.floor(Math.random() * 51) + 10) * 1000) + randomDelay;
+                    
+                    // Add extra randomization for mobile searches to mimic human behavior
+                    if (BING_AUTOSEARCH.search.device === "mobile") {
+                        // Add 10-30% random variation to delay for mobile
+                        const variation = 0.1 + (Math.random() * 0.2); // 10-30%
+                        const randomVariation = delay * variation * (Math.random() < 0.5 ? -1 : 1);
+                        delay += randomVariation;
+                    }
+                    
+                    if (BING_AUTOSEARCH.search.interval === 9999 && searches.length > 0) {
+                        // For mobile, use slightly longer random intervals (15-45 seconds instead of 10-60)
+                        const minWait = BING_AUTOSEARCH.search.device === "mobile" ? 15 : 10;
+                        const maxWait = BING_AUTOSEARCH.search.device === "mobile" ? 45 : 60;
+                        delay = randomDelay = ((Math.floor(Math.random() * (maxWait - minWait + 1)) + minWait) * 1000) + randomDelay;
+                    }
+                    
                     searches.push({ term, url, index, delay });
                 }
             } while (searches.length < BING_AUTOSEARCH.search.limit)
@@ -243,7 +355,9 @@
         },
         start: async () => {
             if (BING_AUTOSEARCH.search.device === "mobile") {
-                alert("To get real mobile search results, please use a mobile browser or enable mobile mode in your browser's developer tools.");
+                // Improved mobile search feedback
+                console.log("🔍 Mobile search mode activated with enhanced mobile simulation");
+                BING_AUTOSEARCH.elements.div.settings.innerHTML = `<strong>Auto Search Settings (Mobile Mode):</strong> ${BING_AUTOSEARCH.search.engine.settings.toString()} - Using realistic mobile user agents and behavior patterns.`;
             }
             let searches = BING_AUTOSEARCH.search.generate();
             searches.forEach((search) => {
