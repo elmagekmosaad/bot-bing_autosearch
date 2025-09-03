@@ -1,4 +1,4 @@
-﻿const BING_AUTOSEARCH = {
+﻿﻿const BING_AUTOSEARCH = {
     elements: {
         button: {
             start: document.getElementById("btn-start"),
@@ -45,6 +45,8 @@
             let _multitab_mode = BING_AUTOSEARCH.cookies.get("_multitab_mode");
             let _search_interval = BING_AUTOSEARCH.cookies.get("_search_interval");
             let _search_limit = BING_AUTOSEARCH.cookies.get("_search_limit");
+            let _search_device = BING_AUTOSEARCH.cookies.get("_search_device");
+
             if (!_need_help.value) {
                 modal_help.show();
                 BING_AUTOSEARCH.cookies.set("_need_help", BING_AUTOSEARCH.search.multitab.toString(), 365);
@@ -70,6 +72,9 @@
             } else {
                 BING_AUTOSEARCH.elements.select.multitab.value = _multitab_mode.value;
                 BING_AUTOSEARCH.search.multitab = (_multitab_mode.value === "true");
+            }
+            if (_search_device.value) {
+                BING_AUTOSEARCH.elements.select.device.value = BING_AUTOSEARCH.search.device = _search_device.value;
             }
         }
     },
@@ -293,7 +298,8 @@
             location.reload();
         });
         BING_AUTOSEARCH.elements.select.device.addEventListener("change", () => {
-            BING_AUTOSEARCH.search.device = BING_AUTOSEARCH.elements.select.device.value;
+            BING_AUTOSEARCH.cookies.set("_search_device", BING_AUTOSEARCH.elements.select.device.value, 365);
+            location.reload();
         });
         BING_AUTOSEARCH.elements.div.settings.innerHTML = `<strong>Auto Search Settings:</strong> ${BING_AUTOSEARCH.search.engine.settings.toString()}.`;
     }
