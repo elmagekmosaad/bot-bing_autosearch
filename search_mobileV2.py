@@ -37,22 +37,24 @@ def wait_for(sec=2):
     time.sleep(sec)
 
 
-# Get number of words from command line argument, default to 20 if not provided
-num_words = 20  # Default for mobile
+# Get number of words from command line argument, default to 40 if not provided
+num_words = 40  # Default for mobile
 if len(sys.argv) > 1:
     try:
         num_words = int(sys.argv[1])
         if num_words <= 0:
-            print("Number of words must be positive. Using default (20).")
+            print("Number of words must be positive. Using default (40).")
             num_words = 20
     except ValueError:
-        print("Invalid number format. Using default (20).")
+        print("Invalid number format. Using default (40).")
 
 # Get random words from API
-randomlists_url = f"https://random-word-api.vercel.app/api?words={num_words}"
+randomlists_url = f"https://random-words-api.kushcreates.com/api?language=en&words={num_words}"
 response = requests.get(randomlists_url)
 words_list = json.loads(response.text)
-print('{0} words selected from {1}'.format(len(words_list), randomlists_url))
+words_only = [item['word'] for item in words_list]
+
+print('{0} words selected from {1}'.format(len(words_only), randomlists_url))
 
 # Define mobile emulation with a randomly selected mobile user agent
 mobile_user_agents = [
@@ -78,7 +80,7 @@ edge_options.add_experimental_option("mobileEmulation", mobile_emulation)
 edge_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 edge_options.add_experimental_option('useAutomationExtension', False)
 edge_options.add_argument("--disable-gpu")
-#edge_options.add_argument("--headless")
+edge_options.add_argument("--headless")
 
 
 def safe_read_json(file_path):
